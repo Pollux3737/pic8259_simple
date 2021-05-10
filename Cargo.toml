@@ -11,4 +11,4 @@ keywords = ["no_std", "kernel", "interrupts"]
 license = "Apache-2.0/MIT"
 
 [dependencies.cpuio]
-repository = "https://github.com/Pollux3737/cpuio"
+git = "https://github.com/Pollux3737/cpuio"
