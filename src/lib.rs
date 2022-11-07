@@ -19,10 +19,11 @@
 //! different base interrupts, because DOS used interrupt 0x21 for system
 //! calls.
 
-#![feature(const_fn)]
 #![no_std]
 
-extern crate cpuio;
+extern crate x86_64;
+
+use x86_64::instructions::port::{PortGeneric, ReadWriteAccess, WriteOnlyAccess};
 
 /// Command sent to begin PIC initialization.
 const CMD_INIT: u8 = 0x11;
@@ -40,10 +41,10 @@ struct Pic {
     offset: u8,
 
     /// The processor I/O port on which we send commands.
-    command: cpuio::UnsafePort<u8>,
+    command: PortGeneric<u8, ReadWriteAccess>,
 
     /// The processor I/O port on which we send and receive data.
-    data: cpuio::UnsafePort<u8>,
+    data: PortGeneric<u8, ReadWriteAccess>,
 }
 
 impl Pic {
@@ -73,13 +74,13 @@ impl ChainedPics {
             pics: [
                 Pic {
                     offset: offset1,
-                    command: cpuio::UnsafePort::new(0x20),
-                    data: cpuio::UnsafePort::new(0x21),
+                    command: PortGeneric::new(0x20),
+                    data: PortGeneric::new(0x21),
                 },
                 Pic {
                     offset: offset2,
-                    command: cpuio::UnsafePort::new(0xA0),
-                    data: cpuio::UnsafePort::new(0xA1),
+                    command: PortGeneric::new(0xA0),
+                    data: PortGeneric::new(0xA1),
                 },
             ]
         }
@@ -96,7 +97,7 @@ impl ChainedPics {
         // worked around this by writing garbage data to port 0x80, which
         // allegedly takes long enough to make everything work on most
         // hardware.  Here, `wait` is a closure.
-        let mut wait_port: cpuio::Port<u8> = cpuio::Port::new(0x80);
+        let mut wait_port: PortGeneric<u8, WriteOnlyAccess> = PortGeneric::new(0x80);
         let mut wait = || { wait_port.write(0) };
 
         // Save our original interrupt masks, because I'm too lazy to
